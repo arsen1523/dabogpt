@@ -1,40 +1,27 @@
-document.addEventListener("DOMContentLoaded", function() {
-    const inputElement = document.getElementById("input");
-    const sendButton = document.getElementById("send-btn");
-    const messagesDiv = document.getElementById("messages");
+async function sendMessage() {
+    const userInput = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
 
-    sendButton.addEventListener("click", sendMessage);
-    inputElement.addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            sendMessage();
-        }
+    if (userInput.value.trim() === "") return;
+
+    // Добавляем сообщение пользователя в чат
+    chatBox.innerHTML += `<p><strong>Вы:</strong> ${userInput.value}</p>`;
+
+    // Отправляем запрос на сервер
+    const response = await fetch("http://127.0.0.1:8000/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: userInput.value }),
     });
 
-    async function sendMessage() {
-        let userMessage = inputElement.value.trim();
-        if (!userMessage) return;
+    const data = await response.json();
 
-        addMessageToChat("Вы: " + userMessage);
-        inputElement.value = "";
+    // Добавляем ответ бота в чат
+    chatBox.innerHTML += `<p><strong>Бот:</strong> ${data.response}</p>`;
 
-        try {
-            let response = await fetch("http://127.0.0.1:8000/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: userMessage })
-            });
+    // Прокрутка вниз
+    chatBox.scrollTop = chatBox.scrollHeight;
 
-            let data = await response.json();
-            addMessageToChat("ИИ: " + data.response);
-        } catch (error) {
-            addMessageToChat("Ошибка: не удалось подключиться к серверу.");
-        }
-    }
-
-    function addMessageToChat(message) {
-        let newMessage = document.createElement("div");
-        newMessage.textContent = message;
-        messagesDiv.appendChild(newMessage);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-});
+    // Очищаем поле ввода
+    userInput.value = "";
+}
