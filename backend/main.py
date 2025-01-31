@@ -1,36 +1,19 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
+import requests
 
-# Создание приложения FastAPI
-app = FastAPI()
+TOGETHER_API_KEY = "7d43b91b79092eca3be7ced5baa2035406fa9f957b5d32e6f3ca1581f1e98f03"
 
-# Настройка CORS (чтобы веб-клиент мог обращаться к API)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Разрешить все источники (для тестирования)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+def chat_with_ai(prompt):
+    url = "https://api.together.xyz/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {TOGETHER_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "model": "mistralai/Mistral-7B-Instruct-v0.1",  # Или другой (llama, gemma)
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7
+    }
+    response = requests.post(url, json=data, headers=headers)
+    return response.json()["choices"][0]["message"]["content"]
 
-# Определение модели запроса
-class Message(BaseModel):
-    text: str
-
-# Маршрут для проверки работы API
-@app.get("/")
-def read_root():
-    return {"message": "API работает! Отправьте POST-запрос на /chat"}
-
-# Основной маршрут чата
-@app.post("/chat")
-def chat(message: Message):
-    # Здесь можно добавить логику обработки сообщений (например, через GPT)
-    response_text = f"Вы сказали: {message.text}"
-    return {"response": response_text}
-
-# Заглушка для favicon.ico (чтобы не было 404)
-@app.get("/favicon.ico")
-async def favicon():
-    return {"detail": "No favicon"}
+print(chat_with_ai("Привет, как дела?"))  # Тест запроса
